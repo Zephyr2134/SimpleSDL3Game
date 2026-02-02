@@ -8,11 +8,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    Game game("Window Title", 800, 600, true);
+    Game game("Window Title", 800, 600, false);
 
     while(game.isRunning())
     {
+    game.HandleEvents();
     game.Update();
+    game.RenderGame();
     }
     game.Clear();
     return 0;

@@ -1,10 +1,14 @@
 #include "game.hpp"
 
+Manager manager;
+auto& newPlayer(manager.addEntity()); 
+
 Game::Game(const std::string& winTitle, int winWidth, int winHeight, bool fullscreen) : 
 flags(fullscreen * SDL_WINDOW_FULLSCREEN), 
 win(SDL_CreateWindow(winTitle.c_str(), winWidth, winHeight, flags)), 
 ren(SDL_CreateRenderer(win, NULL)), 
-player(ren, "assets/player/IDLE/idle_down.png", 95.0f, 80.0f, 500.0f, 500.0f)
+player(ren, "assets/player/IDLE/idle_down.png", 95.0f, 80.0f, 500.0f, 500.0f),
+frameDelay(1000 / FPS)
 {
     if(win == NULL)
     {
@@ -19,6 +23,8 @@ player(ren, "assets/player/IDLE/idle_down.png", 95.0f, 80.0f, 500.0f, 500.0f)
     running = true;
     LAST = 0;
     deltaTime = 0;
+
+    newPlayer.addComponent<PositionComponent>();
 }
 
 Game::~Game()
@@ -36,6 +42,18 @@ void Game::HandleEvents()
     }
 }
 
+void Game::Update()
+{
+    handleDeltaTime();
+
+    player.UpdatePlayer(deltaTime);
+
+    manager.update();
+    std::cout << newPlayer.getComponent<PositionComponent>().x() << '.' << newPlayer.getComponent<PositionComponent>().y() << std::endl;
+
+    handleFps();
+}
+
 void Game::RenderGame()
 {
     SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
@@ -46,16 +64,20 @@ void Game::RenderGame()
     SDL_RenderPresent(ren);
 }
 
-void Game::Update()
+void Game::handleDeltaTime()
 {
     NOW = SDL_GetPerformanceCounter();
     deltaTime = (NOW - LAST) / (float)SDL_GetPerformanceFrequency();
     LAST = NOW;
-    HandleEvents();
+}
 
-    player.UpdatePlayer(deltaTime);
-    
-    RenderGame();
+void Game::handleFps()
+{
+    frameTime = SDL_GetPerformanceCounter() - NOW;
+    if(frameDelay > frameTime)
+    {
+        SDL_Delay(frameTime - frameDelay);
+    }
 }
 
 void Game::Clear()
