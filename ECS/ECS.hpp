@@ -46,16 +46,18 @@ class Entity
         bool active = true;
         std::vector<std::unique_ptr<Component>> components;
 
-        ComponentArray componentArray;
-        ComponentBitSet componentBitSet;
+        ComponentArray componentArray{};
+        ComponentBitSet componentBitSet{};
 
     public:
         void update() 
         {
             for(auto& c : components) c->update();
+        }
+        void draw() 
+        {
             for(auto& c : components) c->draw();
         }
-        void draw() {}
 
         bool isActive() const { return active; }
         void destroy() { active = false; }
@@ -80,18 +82,21 @@ class Entity
         }
 
         template <typename T> T& getComponent() const
-        {
-            auto ptr(componentArray[getComponentTypeID<T>()]);
-            return *static_cast<T*>(ptr);
-        }
+{
+    auto id = getComponentTypeID<T>();
+    if (!componentBitSet[id])
+        throw std::runtime_error("Component not found");
+
+    return *static_cast<T*>(componentArray[id]);
+}
 };
 
 class Manager
 {
-    private:
-        std::vector<std::unique_ptr<Entity>> entities;
 
     public:
+    std::vector<std::unique_ptr<Entity>> entities;
+
         void update()
         {
             for(auto& e : entities) e->update();
@@ -118,4 +123,5 @@ class Manager
             entities.emplace_back(std::move(uPtr));
             return *e;
         }
+
 };
