@@ -32,6 +32,7 @@ Game::Game(const std::string& winTitle, int winWidth, int winHeight, bool fullsc
     player.addComponent<TransformComponent>(20.0f, 20.0f, 640.0f, 640.0f, 200);
     player.addComponent<SpriteComponent>("assets\\player\\IDLE\\idle_down.png", 8, 1);
     player.addComponent<KeyboardController>();
+    player.addComponent<MicrophoneComponent>();
 }
 
 Game::~Game()

@@ -3,13 +3,13 @@
 #include "game.hpp"
 
 int main(int argc, char* argv[]) {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO) == 0) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
         return 1;
     }
 
     {
-    Game game("Window Title", 800, 600, true);
+    Game game("Window Title", 800, 600, false);
 
     while (game.isRunning()) {
         game.HandleEvents();

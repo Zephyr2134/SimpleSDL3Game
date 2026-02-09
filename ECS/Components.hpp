@@ -3,3 +3,4 @@
 #include "TransformComponent.hpp"
 #include "SpriteComponent.hpp"
 #include "KeyboardController.hpp"
+#include "MicrophoneComponent.hpp"
