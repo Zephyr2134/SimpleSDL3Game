@@ -1,3 +1,4 @@
+#pragma once
 #include "ECS.hpp"
 #include "Components.hpp"
 #include <SDL3/SDL.h>
@@ -18,53 +19,91 @@ public:
 
     void init() override
     {
-        mic =
-        SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_RECORDING, NULL);
 
-        SDL_GetAudioDeviceFormat(mic, &src, NULL);
+    mic = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_RECORDING, NULL);
+    if (!mic) {
+        SDL_Log("OpenAudioDevice failed: %s", SDL_GetError());
+        return;
+    }
 
-        dst.freq = 48000;
-        dst.channels = 1;
-        dst.format = SDL_AUDIO_F32;
+    if (!SDL_GetAudioDeviceFormat(mic, &src, NULL)) {
+        SDL_Log("GetAudioDeviceFormat failed: %s", SDL_GetError());
+        return;
+    }
+
+    dst.freq = 48000;
+    dst.channels = 1;
+    dst.format = SDL_AUDIO_F32;
 
     stream = SDL_CreateAudioStream(&src, &dst);
-    SDL_BindAudioStream(mic, stream);
+    if (!stream) {
+        SDL_Log("CreateAudioStream failed: %s", SDL_GetError());
+        return;
+    }
+
+    if (!SDL_BindAudioStream(mic, stream)) {
+        SDL_Log("BindAudioStream failed: %s", SDL_GetError());
+        return;
+    }
+
     SDL_ResumeAudioDevice(mic);
     }
 
+    float detectFrequency(float* samples, int frames, float sample_rate)
+{
+    int minLag = sample_rate / 1000;
+    int maxLag = sample_rate / 50;
+
+    float bestCorrelation = 0.0f;
+    int bestLag = 0;
+
+    for (int lag = minLag; lag < maxLag; lag++)
+    {
+        float correlation = 0.0f;
+
+        for (int i = 0; i < frames - lag; i++)
+            correlation += samples[i] * samples[i + lag];
+
+        if (correlation > bestCorrelation)
+        {
+            bestCorrelation = correlation;
+            bestLag = lag;
+        }
+    }
+
+    if (bestLag == 0)
+        return 0.0f;
+
+    return sample_rate / bestLag;
+}
+
     void update() override
     {
-        float samples[1024];
+        float samples[1024]; 
+        int bytes = SDL_GetAudioStreamData(stream, samples, sizeof(samples)); 
+        if (bytes <= 0) return; 
+        int frames = bytes / sizeof(float); 
+        if (frames == 0) return; 
 
-        int bytes = SDL_GetAudioStreamData(stream, samples, sizeof(samples));
-        if (bytes <= 0)
-            return;
+        float freq = detectFrequency(samples, frames, dst.freq);
 
-        int frames = bytes / sizeof(float);
-        if (frames == 0)
-            return;
-
-        /*float rms = 0.0f;
-        for (int i = 0; i < frames; i++)
-            rms += samples[i] * samples[i];
-
-        rms = sqrt(rms / frames);
-        std::cout << rms << std::endl;*/
-        int crossings = 0;
-        for (int i = 1; i < frames; i++) {
-            if (samples[i-1] < 0 && samples[i] >= 0)
-                crossings++;
-        }
-        float frequency = (crossings * 48000) / (2.0f * frames);
-        std::cout << frequency << std::endl;
-
+        if (freq > 0.0f){
+            if (fabs(freq - currentFreq) > 1.0f)  // 1 Hz threshold
+    {
+        std::cout << "Frequency: " << freq << " Hz\n";
+        currentFreq = freq;
+    }
+            }
     }
 
     void draw() override {}
+
+     float currentFreq = 0.0f;
 
 private:
     SDL_AudioDeviceID mic;
     SDL_AudioStream* stream;
     SDL_AudioSpec src;
     SDL_AudioSpec dst;
+   
 };
