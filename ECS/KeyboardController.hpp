@@ -9,16 +9,12 @@ class KeyboardController : public Component
 
     public:
         TransformComponent *transform;
-        MicrophoneComponent *mic;
 
         void init() override
         {
             transform = nullptr;
             if(entity->hasComponent<TransformComponent>())
                 transform = &entity->getComponent<TransformComponent>();
-            mic = nullptr;
-            if(entity->hasComponent<MicrophoneComponent>())
-                mic = &entity->getComponent<MicrophoneComponent>();
         }
 
         void update() override
@@ -64,15 +60,6 @@ class KeyboardController : public Component
                     default:
                         break;
                 }
-            }
-            if(mic)
-            {
-                if(mic->currentFreq > 400)
-                {
-                    transform->direction[0] = true;
-                }
-            }else{
-                std::cout << "mic no" << std::endl;
             }
         }
         }

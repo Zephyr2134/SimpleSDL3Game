@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
 
     game.Clear();
     }
+    
     SDL_Quit();
 
     return 0;
